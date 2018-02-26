@@ -1,0 +1,6 @@
+---
+- hosts: hive
+  remote_user: reptile
+  become: yes
+  roles:
+    - common
