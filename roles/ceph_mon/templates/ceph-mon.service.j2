@@ -1,0 +1,15 @@
+[Unit]
+Description=Ceph Monitor [{{ monitor_name }}][{{ cluster }}]
+After=network-online.target local-fs.target time-sync.target
+Wants=network-online.target local-fs.target time-sync.target
+
+[Service]
+ExecStart=/usr/bin/ceph-mon --cluster {{ cluster }} --id {{ monitor_name }}
+ExecStop=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=10s
+TimeoutStartSec=120
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

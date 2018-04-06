@@ -1,4 +1,17 @@
 [global]
 fsid = {{ ceph_fsid }}
-mon_initial_members =
-mon_host =
+mon initial members = {% for host in groups["ceph_mon"] %}
+{{ hostvars[host]['ansible_fqdn'] }}{% if not loop.last %},{% endif %}
+{% endfor %}
+
+mon host = {% for host in groups["ceph_mon"] %}
+{{ hostvars[host]["ansible_default_ipv4"]["address"] }}{% if not loop.last %},{% endif %}
+{% endfor %}
+
+auth cluster required = cephx
+auth service required = cephx
+auth client required = cephx
+
+[mon]
+mon addr = {{ ansible_default_ipv4.address }}:6789
+public addr = {{ ansible_default_ipv4.address }}
