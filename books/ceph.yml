@@ -1,0 +1,2 @@
+---
+- import_playbook: ceph_common.yml
