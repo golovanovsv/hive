@@ -1,43 +1,41 @@
-- file:
+- set_fact:
+    monitor_name: "{{ ansible_hostname }}"
+    monitors:
+      - { name: ceph0, ip: "212.49.118.252"}
+      - { name: ceph1, ip: "212.49.118.253"}
+      - { name: ceph2, ip: "212.49.118.254"}
+
+- name: "Creating monitor dirs"
+  file:
     path: "{{ item }}"
     state: directory
     owner: "ceph"
     group: "ceph"
     mode: "0755"
+    recurse: true
   with_items:
     - "/var/lib/ceph/tmp"
+    - "/var/lib/ceph/mon"
 
-- set_fact:
-    monitor_name: "{{ ansible_hostname }}"
-
-- name: create monitor initial keyring
+- name: "Creating monitor initial keyring"
   command: ceph-authtool /var/lib/ceph/tmp/keyring.mon.{{ monitor_name }} --create-keyring --name=mon. --add-key={{ monitor_secret }} --cap mon 'allow *'
   args:
     creates: /var/lib/ceph/tmp/keyring.mon.{{ monitor_name }}
 
-- name: set key permissions
+- name: "Set keyring permissions"
   file:
     path: /var/lib/ceph/tmp/keyring.mon.{{ monitor_name }}
     owner: "ceph"
     group: "ceph"
     mode: "0600"
 
-- name: create monitor directory
-  file:
-    path: /var/lib/ceph/mon/{{ cluster }}-{{ monitor_name }}
-    state: directory
-    owner: "ceph"
-    group: "ceph"
-    mode: "0755"
-    recurse: true
-
-- name: create custom admin keyring
+- name: "Create custom admin keyring"
   command: "ceph-authtool /etc/ceph/{{ cluster }}.client.admin.keyring --create-keyring --name=client.admin --add-key={{ admin_secret }} --set-uid=0 --cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow' --cap mgr 'allow *'"
   args:
     creates: /etc/ceph/{{ cluster }}.client.admin.keyring
   register: create_custom_admin_secret
 
-- name: set ownership of admin keyring
+- name: "Set admin keyring permissions"
   file:
     path: "/etc/ceph/{{ cluster }}.client.admin.keyring"
     state: file
@@ -45,16 +43,19 @@
     group: "ceph"
     mode: "0600"
 
-- name: import admin keyring into mon keyring
+- name: "Import admin keyring into mon keyring"
   command: ceph-authtool /var/lib/ceph/tmp/keyring.mon.{{ monitor_name }} --import-keyring /etc/ceph/{{ cluster }}.client.admin.keyring
 
-- name: ceph monitor mkfs with keyring
-  become: true
-  command: ceph-mon --cluster {{ cluster }} --mkfs -i {{ monitor_name }} --fsid {{ ceph_fsid }} --keyring /var/lib/ceph/tmp/keyring.mon.{{ monitor_name }}
-  args:
-    creates: /var/lib/ceph/mon/{{ cluster }}-{{ monitor_name }}/keyring
+- name: "Creating monmap"
+  command: monmaptool --create --clobber --add {{ item.name }} {{ item.ip }} --fsid {{ ceph_fsid }} /var/lib/ceph/tmp/monmap
+  with_items: "{{ monitors }}"
 
-- name: generate systemd unit file
+- name: "Monitor mkfs with keyring"
+  become: true
+  become_user: ceph
+  command: ceph-mon --cluster {{ cluster }} --mkfs -i {{ monitor_name }} --fsid {{ ceph_fsid }} --keyring /var/lib/ceph/tmp/keyring.mon.{{ monitor_name }} --monmap var/lib/ceph/tmp/monmap
+
+- name: "Generate systemd unit file"
   become: true
   template:
     src: "{{ role_path }}/templates/ceph-mon.service.j2"
@@ -62,6 +63,7 @@
     owner: "root"
     group: "root"
     mode: "0644"
+    force: true
 
 - name: start the monitor service
   service:
