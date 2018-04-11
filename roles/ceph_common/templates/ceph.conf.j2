@@ -1,7 +1,7 @@
 [global]
 fsid = {{ ceph_fsid }}
 mon initial members = {% for host in groups["ceph_mon"] %}
-{{ hostvars[host]['ansible_fqdn'] }}{% if not loop.last %},{% endif %}
+{{ hostvars[host]['ansible_hostname'] }}{% if not loop.last %},{% endif %}
 {% endfor %}
 
 mon host = {% for host in groups["ceph_mon"] %}
