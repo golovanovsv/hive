@@ -1,3 +1,6 @@
+- name: "Installing ceph-mon"
+  apt: name=ceph-mon state=latest
+
 - set_fact:
     monitor_name: "{{ ansible_hostname }}"
 
@@ -62,7 +65,7 @@
     var: unit_file
 
 - name: "Reload systemd configuration if needed"
-  command: /bin/systemctl daemon-reload
+  systemd: daemon_reload=yes
   when: unit_file.changed == true
 
 - name: start the monitor service

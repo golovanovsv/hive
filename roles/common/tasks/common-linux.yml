@@ -26,6 +26,7 @@
       - ca-certificates
       - apt-transport-https
       - bridge-utils
+      - ntpdate
 
 # Устанавливаем типовой софт для семейства типа "Debian"
 - name: Linux common software install

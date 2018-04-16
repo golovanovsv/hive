@@ -10,7 +10,13 @@
 - apt_repository: repo={{ item }} state=present
   with_items: "{{ linux_repo_list }}"
 
-- apt: name=ceph state=latest
+- name: "Installing ceph/ceph-common"
+  apt:
+    name: {{ item }}
+    state: latest
+  with_items:
+    - ceph
+    - ceph_common
 
 - user: name=ceph shell=/bin/false state=present
 
