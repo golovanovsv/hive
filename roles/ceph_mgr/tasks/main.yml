@@ -1,0 +1,48 @@
+- name: "Installing ceph-mgr"
+  apt: name=ceph-mgr state=latest
+
+- set_fact:
+    mgr_name: "{{ ansible_hostname }}"
+
+- name: "Creating mgr. dirs"
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "ceph"
+    group: "ceph"
+    mode: "0755"
+    recurse: true
+  with_items:
+    - "/var/lib/ceph/mgr/{{ cluster }}-{{ mgr_name }}"
+
+- name: "Creating mgr. user"
+  become_user: ceph
+  command: ceph --cluster {{ cluster }} auth get-or-create-key mgr.{{ mgr_name }} mon 'allow profile mgr' osd 'allow *' mds 'allow *'
+  register: mgr_key
+
+- name: "Store mgr. keyring"
+  template:
+    src: "{{ role_path }}/templates/keyring.j2"
+    dest: /var/lib/ceph/mgr/{{ cluster }}-{{ mgr_name }}/keyring
+    owner: "ceph"
+    group: "ceph"
+    mode: "0644"
+
+- name: "Generate mgr. systemd unit file"
+  template:
+    src: "{{ role_path }}/templates/ceph-mgr.service.j2"
+    dest: /etc/systemd/system/ceph-mgr@{{ mgr_name }}.service
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  register: unit_file
+
+- name: "Reload systemd configuration if needed"
+  systemd: daemon_reload=yes
+  when: unit_file.changed == true
+
+- name: "Start the mgr. service"
+  service:
+    name: ceph-mgr@{{ mgr_name }}
+    state: started
+    enabled: yes

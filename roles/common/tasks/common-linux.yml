@@ -26,6 +26,7 @@
       - ca-certificates
       - apt-transport-https
       - bridge-utils
+      - ntpdate
 
 # Устанавливаем типовой софт для семейства типа "Debian"
 - name: Linux common software install
@@ -34,9 +35,43 @@
   with_items: "{{ linux_soft_list }}"
   when: ansible_os_family == "Debian"
 
-# Настраиваем параметры zshell
-- name: zshrc settings
+# Сбрасываем индивидуальные настройки .zshrc
+- name: .zshrc renew
+  command: "ls /home"
+  register: homes
+
+- get_url:
+    url: https://raw.githubusercontent.com/golovanovsv/configs/master/.zshrc
+    dest: "/home/{{ item }}/.zshrc.tmp"
+    mode: 0644
+    owner: "{{ item }}"
+    group: "{{ item }}"
+  with_items: "{{ homes.stdout_lines }}"
+
+- copy:
+    src: "/home/{{ item }}/.zshrc.tmp"
+    dest: "/home/{{ item }}/.zshrc"
+    mode: 0644
+  with_items: "{{ homes.stdout_lines }}"
+
+- file:
+    state: absent
+    path: "/home/{{ item }}/.zshrc.tmp"
+  with_items: "{{ homes.stdout_lines }}"
+
+# Обновляем параметры zshell
+- name: /etc/zshrc/zshrc renew
   become: yes
-  copy:
-    src: zshrc
+  get_url:
+    url: https://raw.githubusercontent.com/golovanovsv/configs/master/.zshrc
+    dest: "{{ zshrc_path }}.tmp"
+    mode: 0644
+    force: yes
+
+- copy:
+    src: "{{ zshrc_path }}.tmp"
     dest: "{{ zshrc_path }}"
+
+- file:
+    state: absent
+    path: "{{ zshrc_path }}.tmp"

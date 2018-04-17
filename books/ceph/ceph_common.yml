@@ -1,0 +1,5 @@
+---
+- hosts: ceph_cluster
+  become: yes
+  roles:
+    - ceph_common

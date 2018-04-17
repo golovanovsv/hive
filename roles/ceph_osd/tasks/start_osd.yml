@@ -1,0 +1,87 @@
+- parted:
+    device: "{{ item }}"
+    state: info
+  register: device_info
+
+- set_fact:
+    create_osd: "{{ 'true' if device_info.partitions|length == 0 else 'false' }}"
+
+- command: uuidgen
+  register: uuid_raw
+  when: create_osd
+
+- command: ceph --cluster {{ cluster }} osd new {{ uuid_raw.stdout }}
+  when: create_osd
+  register: osd_id_raw
+
+- set_fact:
+    osd_id: "{{ osd_id_raw.stdout }}"
+  when: create_osd
+
+- filesystem:
+    dev: "{{ item }}"
+    fstype: xfs
+    opts: -L osd.{{ osd_id }}
+  when: create_osd
+
+- file:
+    path: /var/lib/ceph/osd/{{ cluster }}-{{ osd_id }}
+    state: directory
+    owner: ceph
+    group: ceph
+    mode: "0755"
+  when: create_osd
+
+- mount:
+    path: /var/lib/ceph/osd/{{ cluster }}-{{ osd_id }}
+    src: "{{ item }}"
+    fstype: xfs
+    state: mounted
+  when: create_osd
+
+- file:
+    path: /var/lib/ceph/osd/{{ cluster }}-{{ osd_id }}
+    state: directory
+    owner: ceph
+    group: ceph
+    mode: "0755"
+  when: create_osd
+
+- command: ceph --cluster {{ cluster }} auth get-or-create-key osd.{{ osd_id }} mon 'allow *' osd 'allow *' mds 'allow *'
+  when: create_osd
+  register: osd_keyring_raw
+
+- name: "Store osd. keyring"
+  template:
+    src: "{{ role_path }}/templates/keyring.j2"
+    dest: /var/lib/ceph/osd/{{ cluster }}-{{ osd_id }}/keyring
+    owner: "ceph"
+    group: "ceph"
+    mode: "0644"
+  when: create_osd
+
+- name: "Init osd. data directory"
+  become_user: ceph
+  command: ceph-osd --cluster {{ cluster }} -i {{ osd_id }} --mkfs --osd-uuid {{ uuid_raw.stdout }}
+  when: create_osd
+
+- name: "Generate osd. systemd unit file"
+  template:
+    src: "{{ role_path }}/templates/ceph-osd.service.j2"
+    dest: /etc/systemd/system/ceph-osd@{{ osd_id }}.service
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  when: create_osd
+  register: unit_file
+
+- name: "Reload systemd configuration if needed"
+  systemd: daemon_reload=yes
+  when: unit_file.changed == true
+
+- name: "Start the mgr. service"
+  service:
+    name: ceph-osd@{{ osd_id }}
+    state: started
+    enabled: yes
+  when: create_osd

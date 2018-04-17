@@ -1,0 +1,5 @@
+---
+- hosts: ceph_mon
+  become: yes
+  roles:
+    - ceph_mon

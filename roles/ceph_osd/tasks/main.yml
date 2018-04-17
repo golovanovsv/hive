@@ -1,0 +1,6 @@
+- name: "List of block devices"
+  shell: ls /dev/sd[b-z]
+  register: block_devices
+
+- include_tasks: start_osd.yml
+  loop: "{{ block_devices.stdout_lines }}"

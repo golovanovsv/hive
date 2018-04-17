@@ -1,0 +1,38 @@
+- set_fact:
+    linux_repokeys_list:
+      - "https://download.ceph.com/keys/release.asc"
+    linux_repo_list:
+      - "deb https://download.ceph.com/debian-luminous/ {{ ansible_distribution_release|lower }} main"
+
+- apt_key: url={{ item }} state=present
+  with_items: "{{ linux_repokeys_list }}"
+
+- apt_repository: repo={{ item }} state=present
+  with_items: "{{ linux_repo_list }}"
+
+- name: "Installing ceph/ceph-common"
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - ceph
+    - ceph-common
+
+- user: name=ceph shell=/bin/false state=present
+
+- file:
+    path: "{{ item }}"
+    state: directory
+    owner: "ceph"
+    group: "ceph"
+    mode: "0755"
+  with_items:
+    - "/etc/ceph"
+    - "/var/lib/ceph"
+
+- template:
+    src: "{{ role_path }}/templates/ceph.conf.j2"
+    dest: "/etc/ceph/{{ cluster }}.conf"
+    owner: "root"
+    group: "root"
+    mode: "644"

@@ -1,0 +1,13 @@
+[Unit]
+Description=Ceph OSD [osd.{{ osd_id }}][{{ cluster }}]
+After=network-online.target local-fs.target time-sync.target
+Wants=network-online.target local-fs.target time-sync.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/ceph-osd --cluster {{ cluster }} -i {{ osd_id }}
+User=ceph
+Group=ceph
+
+[Install]
+WantedBy=multi-user.target

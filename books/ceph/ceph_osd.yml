@@ -1,0 +1,5 @@
+---
+- hosts: ceph_osd
+  become: yes
+  roles:
+    - ceph_osd
