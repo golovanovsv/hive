@@ -1,6 +1,3 @@
-- debug:
-    msg: "Start {{ item }}"
-
 - parted:
     device: "{{ item }}"
     state: info
@@ -50,7 +47,7 @@
     mode: "0755"
   when: create_osd
 
-- command: ceph --cluster {{ cluster }} auth get-or-create-key osd.{{ osd_id }} mon 'allow profile mgr' osd 'allow *' mds 'allow *'
+- command: ceph --cluster {{ cluster }} auth get-or-create-key osd.{{ osd_id }} mon 'allow *' osd 'allow *' mds 'allow *'
   when: create_osd
   register: osd_keyring_raw
 
@@ -63,7 +60,7 @@
     mode: "0644"
   when: create_osd
 
-- name: "Initialize osd. data directory"
+- name: "Init osd. data directory"
   become_user: ceph
   command: ceph-osd --cluster {{ cluster }} -i {{ osd_id }} --mkfs --osd-uuid {{ uuid_raw.stdout }}
   when: create_osd
