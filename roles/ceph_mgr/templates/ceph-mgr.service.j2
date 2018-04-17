@@ -1,0 +1,13 @@
+[Unit]
+Description=Ceph Manager [{{ mgr_name }}][{{ cluster }}]
+After=network-online.target local-fs.target time-sync.target
+Wants=network-online.target local-fs.target time-sync.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/ceph-mgr --cluster {{ cluster }} --id {{ mgr_name }}
+User=ceph
+Group=ceph
+
+[Install]
+WantedBy=multi-user.target

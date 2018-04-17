@@ -12,11 +12,11 @@
 
 - name: "Installing ceph/ceph-common"
   apt:
-    name: {{ item }}
+    name: "{{ item }}"
     state: latest
   with_items:
     - ceph
-    - ceph_common
+    - ceph-common
 
 - user: name=ceph shell=/bin/false state=present
 
@@ -29,7 +29,6 @@
   with_items:
     - "/etc/ceph"
     - "/var/lib/ceph"
-    - "/var/lib/ceph/tmp"
 
 - template:
     src: ceph.conf.j2
