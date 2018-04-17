@@ -2,4 +2,4 @@
 - import_playbook: ceph/ceph_common.yml
 - import_playbook: ceph/ceph_mon.yml
 - import_playbook: ceph/ceph_mgr.yml
-- import_playbook: ceph_osd.yml
+- import_playbook: ceph/ceph_osd.yml

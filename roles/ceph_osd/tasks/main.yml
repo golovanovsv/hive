@@ -1,51 +1,6 @@
-- set_fact:
-    osd_name: "{{ ansible_hostname }}"
+- name: "List of block devices"
+  shell: ls /dev/sd[b-z]
+  register: block_devices
 
-- name: "Creating osd dirs"
-  file:
-    path: "{{ item }}"
-    state: directory
-    owner: "ceph"
-    group: "ceph"
-    mode: "0755"
-    recurse: true
-  with_items:
-    - "/var/lib/ceph/bootstrap-osd"
-    - "/var/lib/ceph/osd/ceph-sdb"
-
-- name: "Creating osd keyring"
-  command: ceph-authtool /var/lib/ceph/bootstrap-osd/{{ cluster }}.keyring --create-keyring --gen-key -n client.bootstrap-osd --cap mon 'profile bootstrap-osd'
-  args:
-    creates: /var/lib/ceph/bootstrap-osd/{{ cluster }}.keyring
-
-- name: "Set osd keyring permissions"
-  file:
-    path: /var/lib/ceph/bootstrap-osd/{{ cluster }}.keyring
-    owner: "ceph"
-    group: "ceph"
-    mode: "0600"
-
-- name: "Check mon daemon is exist"
-  command: ls /var/lib/ceph/mon
-  register: monitors
-
-- name: "Adding OSD key in mon keyring"
-  become: ceph
-  command: ceph-authtool /var/lib/ceph/mon/{{ item }}/keyring --import-keyring /var/lib/ceph/bootstrap-osd/{{ cluster }}.keyring
-  with_items: {{ monitors.stdout_lines }}
-
-- name: "Adding OSDs"
-  become: ceph
-  command: ceph --cluster={{ cluster }} osd new fc619a7a-087b-40dd-aa18-1e1e3dfa33a6 -n client.bootstrap-osd -k /var/lib/ceph/bootstrap-osd/{{ cluster }}.keyring
-
-- name: "FS"
-  filesystem:
-    fstype: xfs
-    dev: /dev/sdb
-
-- name: "Mount OSDs"
-  mount:
-    path: /var/lib/ceph/osd/ceph-sdb
-    src: /dev/sdb
-    fstype: xfs
-    state: mounted
+- include_tasks: start_osd.yml
+  loop: "{{ block_devices.stdout_lines }}"

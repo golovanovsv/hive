@@ -25,6 +25,7 @@
 - name: "Set mon. keyring permissions"
   file:
     path: /var/lib/ceph/tmp/keyring
+    state: file
     owner: "ceph"
     group: "ceph"
     mode: "0600"
