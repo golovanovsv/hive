@@ -1,4 +1,3 @@
 - name: Environment setup
   include_tasks: common-{{ ansible_system|lower }}.yml
   when: ansible_system is defined
-

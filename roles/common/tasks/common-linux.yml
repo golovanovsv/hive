@@ -51,6 +51,8 @@
 - copy:
     src: "/home/{{ item }}/.zshrc.tmp"
     dest: "/home/{{ item }}/.zshrc"
+    owner: "{{ item }}"
+    group: "{{ item }}"
     mode: 0644
   with_items: "{{ homes.stdout_lines }}"
 
@@ -61,7 +63,6 @@
 
 # Обновляем параметры zshell
 - name: /etc/zshrc/zshrc renew
-  become: yes
   get_url:
     url: https://raw.githubusercontent.com/golovanovsv/configs/master/.zshrc
     dest: "{{ zshrc_path }}.tmp"

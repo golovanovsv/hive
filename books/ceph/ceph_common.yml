@@ -3,3 +3,6 @@
   become: yes
   roles:
     - ceph_common
+  tags:
+    - ceph
+    - ceph_common
