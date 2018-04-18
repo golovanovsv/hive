@@ -1,0 +1,73 @@
+- name: "Docker repository key adding"
+  apt_key:
+    url: "https://download.docker.com/linux/debian/gpg"
+    state: present
+
+- name: "Docker repository adding"
+  apt_repository:
+    repo: "deb https://download.docker.com/linux/{{ ansible_os_family|lower }} {{ ansible_distribution_release }} stable"
+    state: present
+
+- name: "Installing docker-ce"
+  apt:
+    name: docker-ce
+    state: latest
+    update_cache: yes
+
+- name: "Checking swarm status"
+  shell: "docker info | egrep '^Swarm: ' | cut -d ' ' -f2"
+  register: swarm_status
+  when: inventory_hostname in groups['docker_mgr']
+
+- name: "Init new Cluster if swarm_id not found"
+  debug:
+    msg: "Init new cluster on {{ inventory_hostname }} [docker swarm init]"
+  when: "inventory_hostname == groups['docker_mgr'][0] and 'active' not in swarm_status.stdout_lines"
+
+- block:
+    - name: "Getting manager token"
+      shell: docker swarm join-token -q manager
+      run_once: true
+      register: manager_token
+
+    - name: "Getting worker token"
+      shell: docker swarm join-token -q worker
+      run_once: true
+      register: worker_token
+
+    - name: "Getting cluster IP"
+      shell: "docker info | egrep 'Node Address: ' | cut -d ' ' -f4"
+      run_once: true
+      register: swarm_ip
+
+    - name: "Getting cluster id"
+      shell: "docker info | egrep 'ClusterID: ' | cut -d ' ' -f3"
+      run_once: true
+      register: swarm_id
+
+    - name: "Getting local id "
+      shell: "docker info | egrep 'ClusterID: ' | cut -d ' ' -f3"
+      register: node_id
+
+    - name: "Leave swarm if different cluster"
+      debug:
+        msg: "Node {{ inventory_hostname }} leaving from Cluster [docker swarm leave -f]"
+      when: swarm_id.stdout != node_id.stdout
+      register: leaved
+
+    - debug:
+        msg: "Node {{ inventory_hostname }} is part of Cluster [{{ swarm_id.stdout }}]"
+      when: swarm_id.stdout == node_id.stdout
+  when: swarm_status.stdout == "active" or inventory_hostname == groups['docker_mgr'][0]
+
+- block:
+    - name: "Join to Cluster: manager"
+      debug:
+        msg: "Node {{ inventory_hostname }} joined to Cluster as manager [docker swarm join {{ swarm_ip.stdout }}:2377 --token {{ manager_token.stdout }}]"
+      when: inventory_hostname in groups['docker_mgr']
+
+    - name: "Join to Cluster: worker"
+      debug:
+        msg: "Node {{ inventory_hostname }} joined to Cluster as worker [docker swarm join {{ swarm_ip.stdout }}:2377 --token {{ worker_token.stdout }}]"
+      when: inventory_hostname in groups['docker_wrk'] and inventory_hostname not in groups['docker_mgr']
+  when: swarm_status is not defined or swarm_status.stdout != "active" or leaved is not skipped

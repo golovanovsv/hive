@@ -1,3 +1,6 @@
+- name: "Installing osd."
+  apt: name=ceph-osd state=latest
+
 - name: "List of block devices"
   shell: ls /dev/sd[b-z]
   register: block_devices
