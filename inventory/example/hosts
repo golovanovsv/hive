@@ -1,12 +1,27 @@
 [control]
 x0
 
-[kube_cluster]
+[docker_mgr]
 x0
 x1
 x2
 
+[docker_wrk]
+x0
+x1
+x2
+ceph0
+
+[docker:children]
+docker_mgr
+docker_wrk
+
 [ceph_mon]
+ceph0
+ceph1
+ceph2
+
+[ceph_mgr]
 ceph0
 ceph2
 
@@ -17,9 +32,18 @@ ceph2
 
 [ceph_cluster:children]
 ceph_mon
+ceph_mgr
 ceph_osd
+
+[ceph_cluster:vars]
+ceph_fsid="ceph cluster id"
+cluster="xvers"
+admin_secret="admin keyring"
+mon_secret="mon keyring"
+public_network="public network"
+cluster_network="cluster network"
 
 [hive:children]
 control
-kube_cluster
+docker
 ceph_cluster
