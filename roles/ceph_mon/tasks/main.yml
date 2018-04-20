@@ -1,4 +1,4 @@
-- name: "Installing ceph-mon"
+- name: "Installing mon."
   apt: name=ceph-mon state=latest
 
 - set_fact:
