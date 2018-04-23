@@ -1,0 +1,35 @@
+- name: "Checking swarm status on control station"
+  shell: "docker info | egrep '^Swarm: ' | cut -d ' ' -f2"
+  register: swarm_status
+
+- name: "Finding managers if exists"
+  shell: "docker info | egrep 'Is Manager:' | cut -d' ' -f4"
+  register: swarm_mgr
+
+- set_fact:
+    is_service: "{{ 'true' if swarm_status.stdout == 'active' and swarm_mgr.stdout == 'true' else 'false' }}"
+    srv_name: "xver_tor"
+    srv_image: "nagev/tor"
+
+- debug:
+    msg: "Cluset of docker swarm or anyone manager not found. Starting in standalone mode"
+  when: not is_service
+
+- name: "Starting TOR as a standalone container"
+  docker_container:
+    name: "{{srv_name}}"
+    image: "{{srv_image}}"
+    state: started
+    restart_policy: always
+    ports:
+      - "9150:9150"
+    #log_driver: syslog
+    #log_opt:
+    #  syslog-facility: local0
+    #  syslog-address: "udp://localhost"
+    #  syslog-tag: xvers/tor
+  when: not is_service
+
+- name: "Starting TOR as a swarm service"
+  command: "docker service create -d --replicas 3 --name {{srv_name}} -p 9150:9150 {{srv_image}}"
+  when: is_service
