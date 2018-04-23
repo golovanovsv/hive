@@ -31,5 +31,12 @@
   when: not is_service
 
 - name: "Starting TOR as a swarm service"
-  command: "docker service create -d --replicas 3 --name {{srv_name}} -p 9150:9150 {{srv_image}}"
+  block:
+    - name: "Check service exist"
+      shell: "docker service ls --filter name={{srv_name}} | sed -n '2p' | awk '{print $2}'"
+      register: srv_exist
+
+    - name: "Creating new service"
+      command: "docker service create -d --replicas 3 --name {{srv_name}} -p 9150:9150 {{srv_image}}"
+      when: srv_exist.stdout != srv_name
   when: is_service
