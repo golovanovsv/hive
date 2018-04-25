@@ -1,0 +1,21 @@
+- set_fact:
+    start_master: " agent -server -ui -advertise {{ hostvars[groups['docker_mgr'][0]]['ansible_default_ipv4']['address'] }} -bootstrap-expect 3"
+    start_slave: " agent -server -advertise {{ ansible_default_ipv4.address }} -join {{ hostvars[groups['docker_mgr'][0]]['ansible_default_ipv4']['address'] }}"
+
+- set_fact:
+    start_args: "{{ start_master if inventory_hostname == groups['docker_mgr'][0] else start_slave}}"
+
+- debug:
+    var: start_args
+
+- name: "Start consul"
+  docker_container:
+    name: "consul-{{ ansible_hostname }}"
+    hostname: "consul-{{ ansible_hostname }}"
+    image: consul
+    state: started
+    restart_policy: always
+    ports:
+      - 8500:8500
+      - 8301:8301
+    command: "{{start_args}}"
