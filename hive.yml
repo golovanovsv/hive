@@ -9,3 +9,4 @@
     - docker-tor
   tags:
     - services
+    - services-tor

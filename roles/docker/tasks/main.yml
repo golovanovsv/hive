@@ -8,6 +8,12 @@
     repo: "deb https://download.docker.com/linux/{{ ansible_os_family|lower }} {{ ansible_distribution_release }} stable"
     state: present
 
+- name: "Installing docker-ce"
+  apt:
+    name: docker-ce
+    state: latest
+    update_cache: yes
+
 - name: "Copy daemon.json"
   template:
     src: daemon.json.j2
@@ -19,12 +25,6 @@
     name: "docker"
     state: restarted
   when: daemon_json.changed
-
-- name: "Installing docker-ce"
-  apt:
-    name: docker-ce
-    state: latest
-    update_cache: yes
 
 - name: "Installing docker-compose"
   block:
@@ -67,6 +67,11 @@
       command: docker swarm join-token -q worker
       run_once: true
       register: worker_token
+
+    - name: "Getting nodes list"
+      shell: "docker node ls | awk '{print $1}' | grep -v 'ID'"
+      run_once: true
+      register: node_list
   when: active_mgr.stdout == 'true' or new_cluster is not skipped
 
 
@@ -75,12 +80,12 @@
   register: swarm_status
 
 - name: "Getting local id "
-  shell: "docker info | egrep 'ClusterID: ' | cut -d ' ' -f3"
+  shell: "docker info | egrep 'NodeID: ' | cut -d ' ' -f3"
   register: node_id
 
 - set_fact:
-    node_in_cluster: "{{ 'true' if swarm_id.stdout == node_id.stdout else 'false' }}"
-    leave_needed: "{{ 'true' if swarm_id.stdout != node_id.stdout and node_id.stdout != '' else 'false' }}"
+    node_in_cluster: "{{ 'true' if node_id.stdout in node_list.stdout_lines else 'false' }}"
+    leave_needed: "{{ 'true' if node_id.stdout not in node_list.stdout_lines and node_id.stdout != '' else 'false' }}"
 
 - debug:
     msg: "Node {{ inventory_hostname }} is part of Cluster"
