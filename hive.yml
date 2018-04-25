@@ -2,3 +2,11 @@
 - import_playbook: books/common.yml
 - import_playbook: books/ceph.yml
 - import_playbook: books/docker.yml
+
+- hosts: control
+  become: yes
+  roles:
+    - docker-tor
+  tags:
+    - services
+    - services-tor
