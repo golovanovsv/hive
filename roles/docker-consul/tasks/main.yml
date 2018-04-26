@@ -1,21 +1,48 @@
-- set_fact:
-    start_master: " agent -server -ui -advertise {{ hostvars[groups['docker_mgr'][0]]['ansible_default_ipv4']['address'] }} -bootstrap-expect 3"
-    start_slave: " agent -server -advertise {{ ansible_default_ipv4.address }} -join {{ hostvars[groups['docker_mgr'][0]]['ansible_default_ipv4']['address'] }}"
+- file:
+    path: /data/consul
+    state: directory
+    recurse: yes
+    owner: root
+    group: docker
+    mode: 0777
 
 - set_fact:
-    start_args: "{{ start_master if inventory_hostname == groups['docker_mgr'][0] else start_slave}}"
+    is_server: "{{ 'true' if inventory_hostname in groups['docker_mgr'] else 'false' }}"
+    node_name: "consul-{{ ansible_hostname }}"
 
-- debug:
-    var: start_args
+- template:
+    src: "config.json.j2"
+    dest: /data/consul/config.json
+    owner: root
+    group: docker
+    mode: 0644
+  register: config_json
 
-- name: "Start consul"
-  docker_container:
-    name: "consul-{{ ansible_hostname }}"
-    hostname: "consul-{{ ansible_hostname }}"
+- set_fact:
+    join_list: "{% for host in groups['docker_mgr'] %} -join {{ hostvars[host]['ansible_default_ipv4']['address']}}{% endfor %}"
+    node_name: "consul-{{ ansible_hostname }}"
+
+- set_fact:
+    start_server: "agent -server -bootstrap-expect 3 {{ join_list }} -advertise {{ ansible_default_ipv4.address }} -ui -client 0.0.0.0"
+    start_node: "agent {{ join_list }} -advertise {{ ansible_default_ipv4.address }} -ui -client 0.0.0.0"
+
+- set_fact:
+    start_args: "{{start_server if inventory_hostname in groups['docker_mgr'] else start_node}}"
+
+- debug: var=start_args
+
+- docker_container:
+    name: "{{ node_name}}"
+    hostname: "{{ node_name }}"
     image: consul
     state: started
-    restart_policy: always
     ports:
-      - 8500:8500
+      - 8300:8300
       - 8301:8301
-    command: "{{start_args}}"
+      - 8302:8302
+      - 8500:8500
+      - 8600:8600
+      - 53:8600/udp
+    volumes:
+      - /data/consul:/consul/data
+    command: "{{ start_args }}"

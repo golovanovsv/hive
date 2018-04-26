@@ -3,7 +3,7 @@
 - import_playbook: books/ceph.yml
 - import_playbook: books/docker.yml
 
-- hosts: docker_mgr
+- hosts: docker
   become: yes
   roles:
     - docker-consul

@@ -1,0 +1,55 @@
+- hosts: docker
+  become: yes
+  tasks:
+    - set_fact:
+        join_list: "{% for host in groups['docker_mgr'] %} -join {{ hostvars[host]['ansible_default_ipv4']['address']}}{% endfor %}"
+        node_name: "consul-{{ ansible_hostname }}"
+
+    - debug: var=join_list
+
+    - block:
+      - docker_container:
+          name: "{{ node_name }}"
+          state: absent
+
+      - file:
+          name: "/data/consul"
+          state: absent
+      when: true
+
+    - block:
+      - file:
+          path: /data/consul
+          state: directory
+          recurse: yes
+          owner: root
+          group: docker
+          mode: 0777
+
+      - set_fact:
+          start_node: "agent -server {{ join_list }} -advertise {{ ansible_default_ipv4.address }} -ui -client 0.0.0.0"
+
+      - set_fact:
+          start_master: "{{ start_node }} -bootstrap-expect 3"
+
+      - set_fact:
+          start_args: "{{start_master if inventory_hostname == groups['docker_mgr'][0] else start_node}}"
+
+      - debug: var=start_args
+
+      - docker_container:
+          name: "{{ node_name}}"
+          hostname: "{{ node_name }}"
+          image: consul
+          state: started
+          ports:
+            - 8300:8300
+            - 8301:8301
+            - 8302:8302
+            - 8500:8500
+            - 8600:8600
+            - 53:8600/udp
+          volumes:
+            - /data/consul:/consul/data
+          command: "{{ start_args }}"
+      when: false and inventory_hostname in groups['docker_mgr']

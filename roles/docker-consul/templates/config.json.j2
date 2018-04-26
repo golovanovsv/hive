@@ -1,0 +1,12 @@
+{
+    "datacenter": "xvers",
+    "advertise_addr": "{{ ansible_default_ipv4.address }}"
+    "node_name": "{{ node_name }}",
+    "server": "{{ is_server|lower }}",
+    "client": "0.0.0.0",
+    "ui": "{{ 'true' if is_server else 'false' }}",
+    "recursors": "8.8.8.8",
+    "dns_config": {
+        "recursor_timeout": "1"
+    }
+}
