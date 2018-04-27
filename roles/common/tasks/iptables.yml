@@ -1,0 +1,92 @@
+- set_fact:
+    server_interface: "eth0"
+
+- name: "Accept IPv4 all for setup"
+  iptables:
+    chain: INPUT
+    ip_version: ipv4
+    policy: ACCEPT
+
+- name: "Accept IPv6 all for setup"
+  iptables:
+    chain: INPUT
+    ip_version: ipv6
+    policy: ACCEPT
+
+- name: "Flush iptables for setup"
+  command: "{{item}}"
+  with_items:
+    - 'iptables -t filter -F INPUT'
+    - 'ip6tables -t filter -F INPUT'
+
+- name: "Setup IPv4 established input"
+  iptables:
+    chain: INPUT
+    table: filter
+    ctstate: ESTABLISHED,RELATED
+    ip_version: ipv4
+    jump: ACCEPT
+
+- name: "Setup IPv6 established input"
+  iptables:
+    chain: INPUT
+    table: filter
+    ctstate: ESTABLISHED,RELATED
+    ip_version: ipv6
+    jump: ACCEPT
+
+- name: "Setup IPv4 protocols rules"
+  iptables:
+    chain: INPUT
+    table: filter
+    in_interface: "{{ server_interface }}"
+    ip_version: ipv4
+    protocol: "{{ item.proto }}"
+    destination_port: "{{ item.port }}"
+    jump: ACCEPT
+    state: present
+  with_items: "{{ accepted_rules }}"
+
+- name: "Setup IPv4 sources rules"
+  iptables:
+    chain: INPUT
+    table: filter
+    in_interface: "{{ server_interface }}"
+    ip_version: ipv4
+    source: "{{ item }}"
+    jump: ACCEPT
+  with_items: "{{ accepted_sources_ipv4}}"
+
+- name: "Setup IPv6 protocols rules"
+  iptables:
+    chain: INPUT
+    table: filter
+    in_interface: "{{ server_interface }}"
+    ip_version: ipv6
+    protocol: "{{ item.proto }}"
+    destination_port: "{{ item.port }}"
+    jump: ACCEPT
+    state: present
+  with_items: "{{ accepted_rules }}"
+
+- name: "Setup IPv6 sources rules"
+  iptables:
+    chain: INPUT
+    table: filter
+    in_interface: "{{ server_interface }}"
+    ip_version: ipv6
+    source: "{{ item }}"
+    jump: ACCEPT
+  with_items: "{{ accepted_sources_ipv6 }}"
+
+- name: "Drop IPv4 all"
+  iptables:
+    chain: INPUT
+    ip_version: ipv4
+    policy: ACCEPT
+
+- name: "Drop IPv6 all"
+  iptables:
+    chain: INPUT
+    ip_version: ipv6
+    policy: ACCEPT

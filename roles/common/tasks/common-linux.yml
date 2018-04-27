@@ -20,7 +20,8 @@
 #  with_items: "{{ linux_repository_list }}"
 
 # Определяем типовой софт
-- set_fact:
+- name: "Init list of linux common software"
+  set_fact:
     linux_soft_list:
       - mc
       - gawk
@@ -34,20 +35,26 @@
       - apt-transport-https
       - bridge-utils
       - ntpdate
+      - jq
 
 # Устанавливаем типовой софт для семейства типа "Debian"
-- name: Linux common software install
+- name: "Install linux common software"
+  name: Linux common software install
   become: yes
   apt: name={{ item }} state=present
   with_items: "{{ linux_soft_list }}"
   when: ansible_os_family == "Debian"
 
+- name: "Setup firewall rules"
+  include_tasks: iptables.yml
+
 # Сбрасываем индивидуальные настройки .zshrc
-- name: .zshrc renew
+- name: "List homes"
   command: "ls /home"
   register: homes
 
-- get_url:
+- name: "Download shared .zshrc config"
+  get_url:
     url: https://raw.githubusercontent.com/golovanovsv/configs/master/.zshrc
     dest: "/home/{{ item }}/.zshrc.tmp"
     mode: 0644
@@ -55,7 +62,8 @@
     group: "{{ item }}"
   with_items: "{{ homes.stdout_lines }}"
 
-- copy:
+- name: "Update .zshrc config"
+  copy:
     src: "/home/{{ item }}/.zshrc.tmp"
     dest: "/home/{{ item }}/.zshrc"
     owner: "{{ item }}"
@@ -63,23 +71,26 @@
     mode: 0644
   with_items: "{{ homes.stdout_lines }}"
 
-- file:
+- name: "Remove temp .zshrc config"
+  file:
     state: absent
     path: "/home/{{ item }}/.zshrc.tmp"
   with_items: "{{ homes.stdout_lines }}"
 
 # Обновляем параметры zshell
-- name: /etc/zshrc/zshrc renew
+- name: "Download shared zshrc config"
   get_url:
     url: https://raw.githubusercontent.com/golovanovsv/configs/master/.zshrc
     dest: "{{ zshrc_path }}.tmp"
     mode: 0644
     force: yes
 
-- copy:
+- name: "Update global zshrc config"
+  copy:
     src: "{{ zshrc_path }}.tmp"
     dest: "{{ zshrc_path }}"
 
-- file:
+- name: "Remove temp zhrc config"
+  file:
     state: absent
     path: "{{ zshrc_path }}.tmp"
