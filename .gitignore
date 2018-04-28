@@ -1,3 +1,4 @@
 .idea/*
-linux.retry
+*.retry
 inventory/xvers
+test.yml

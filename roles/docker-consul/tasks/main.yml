@@ -10,17 +10,23 @@
     is_server: "{{ 'true' if inventory_hostname in groups['docker_mgr'] else 'false' }}"
     node_name: "consul-{{ ansible_hostname }}"
 
-- template:
-    src: "config.json.j2"
-    dest: /data/consul/config.json
-    owner: root
-    group: docker
-    mode: 0644
-  register: config_json
+# Если буду переделывать на запуск через
+# конфигурационный файл
+#- template:
+#    src: "config.json.j2"
+#    dest: /data/consul/config.json
+#    owner: root
+#    group: docker
+#    mode: 0644
+#  register: config_json
 
 - set_fact:
     join_list: "{% for host in groups['docker_mgr'] %} -join {{ hostvars[host]['ansible_default_ipv4']['address']}}{% endfor %}"
     node_name: "consul-{{ ansible_hostname }}"
+
+- set_fact:
+    random_mgr: "{{ hostvars[item]['ansible_default_ipv4']['address'] }}"
+  with_random_choice: "{{ groups['docker_mgr'] }}"
 
 - set_fact:
     start_server: "agent -server -bootstrap-expect 3 {{ join_list }} -advertise {{ ansible_default_ipv4.address }} -ui -client 0.0.0.0"
@@ -28,10 +34,10 @@
 
 - set_fact:
     start_args: "{{start_server if inventory_hostname in groups['docker_mgr'] else start_node}}"
+    registrator_args: "-ttl 120 -ttl-refresh 60 -internal consul://{{ ansible_default_ipv4.address if inventory_hostname in groups['docker_mgr'] else random_mgr}}:8500"
 
-- debug: var=start_args
-
-- docker_container:
+- name: "Starting consul"
+  docker_container:
     name: "{{ node_name}}"
     hostname: "{{ node_name }}"
     image: consul
@@ -46,3 +52,13 @@
     volumes:
       - /data/consul:/consul/data
     command: "{{ start_args }}"
+
+- name: "Starting registrator for consul"
+  docker_container:
+    name: "registrator"
+    image: "gliderlabs/registrator"
+    state: started
+    restart_policy: always
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+    command: "{{ registrator_args}}"
