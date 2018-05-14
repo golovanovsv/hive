@@ -1,0 +1,8 @@
+accepted_rules:
+  - { port: 22, proto: "tcp"}
+  - { port: 80, proto: "udp" }
+  - { port: 443, proto: "tcp" }
+accepted_sources_ipv4:
+  - "0.0.0.0/0"
+accepted_sources_ipv6:
+  - "::0/128"

@@ -10,9 +10,20 @@
 
 - name: "Installing docker-ce"
   apt:
-    name: docker-ce
+    name: [docker-ce, python-pip]
     state: latest
     update_cache: yes
+
+- name: "Installing python modules on docker nodes"
+  pip:
+    name: docker-py
+    state: present
+
+- name: "Installing docker-compose on docker managers"
+  pip:
+    name: docker-compose
+    state: present
+  when: inventory_hostname in groups['docker_mgr']
 
 - name: "Copy daemon.json"
   template:
@@ -25,17 +36,6 @@
     name: "docker"
     state: restarted
   when: daemon_json.changed
-
-- name: "Installing docker-compose"
-  block:
-    - apt:
-        name: python-pip
-        state: present
-
-    - pip:
-        name: docker-compose
-        state: present
-  when: inventory_hostname in groups['docker_mgr']
 
 - name: "Finding managers if exists"
   shell: "docker info | egrep 'Is Manager:' | cut -d' ' -f4"
