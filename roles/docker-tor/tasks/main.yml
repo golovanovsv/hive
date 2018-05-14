@@ -12,7 +12,7 @@
     srv_image: "nagev/tor"
 
 - debug:
-    msg: "Cluset of docker swarm or anyone manager not found. Starting in standalone mode"
+    msg: "Cluster of docker swarm or anyone manager not found. Starting in standalone mode"
   when: not is_service
 
 - name: "Starting TOR as a standalone container"

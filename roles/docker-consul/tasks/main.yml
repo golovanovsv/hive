@@ -25,16 +25,12 @@
     node_name: "consul-{{ ansible_hostname }}"
 
 - set_fact:
-    random_mgr: "{{ hostvars[item]['ansible_default_ipv4']['address'] }}"
-  with_random_choice: "{{ groups['docker_mgr'] }}"
-
-- set_fact:
     start_server: "agent -server -bootstrap-expect 3 {{ join_list }} -advertise {{ ansible_default_ipv4.address }} -ui -client 0.0.0.0"
     start_node: "agent {{ join_list }} -advertise {{ ansible_default_ipv4.address }} -ui -client 0.0.0.0"
 
 - set_fact:
     start_args: "{{start_server if inventory_hostname in groups['docker_mgr'] else start_node}}"
-    registrator_args: "-ttl 120 -ttl-refresh 60 -internal consul://{{ ansible_default_ipv4.address if inventory_hostname in groups['docker_mgr'] else random_mgr}}:8500"
+    registrator_args: "-ttl 120 -ttl-refresh 60 -resync 60 -internal consul://{{ ansible_default_ipv4.address }}:8500"
 
 - name: "Starting consul"
   docker_container:
