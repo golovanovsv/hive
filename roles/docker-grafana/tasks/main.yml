@@ -1,0 +1,24 @@
+- name: "Make grafana dirs"
+  file:
+    path: /media/hdd1/data/grafana
+    state: directory
+    mode: 0777
+
+- name: "Starting grafana as a standalone container"
+  docker_container:
+    name: "xver_grafana"
+    image: "grafana/grafana"
+    state: started
+    restart_policy: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - /media/hdd1/data/grafana:/var/lib/grafana
+    env:
+      "GF_SERVER_ROOT_URL=http://x0.{{ domain_name }},GF_SECURITY_ADMIN_PASSWORD={{ grafana_admin_passoword }}"
+    #log_driver: syslog
+    #log_opt:
+    #  syslog-facility: local0
+    #  syslog-address: "udp://localhost"
+    #  syslog-tag: xvers/grafana
+  register: new_container

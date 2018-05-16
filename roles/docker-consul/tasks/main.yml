@@ -38,6 +38,7 @@
     hostname: "{{ node_name }}"
     image: consul
     state: started
+    restart_policy: always
     ports:
       - 8300:8300
       - 8301:8301

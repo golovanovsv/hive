@@ -1,0 +1,24 @@
+---
+- hosts: control
+  become: yes
+  roles:
+    - docker-tor
+  tags:
+    - services
+    - services-tor
+
+- hosts: control
+  become: yes
+  roles:
+    - docker-prometheus
+  tags:
+    - services
+    - service-prometheus
+
+- hosts: control
+  become: yes
+  roles:
+    - docker-grafana
+  tags:
+    - services
+    - service-grafana

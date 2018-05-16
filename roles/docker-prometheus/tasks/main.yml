@@ -1,0 +1,30 @@
+- name: "Make prometheus dirs"
+  file:
+    path: /media/hdd1/data/prometheus
+    state: directory
+    mode: 0777
+
+- name: "Config for prometheus"
+  template:
+    src: "prometheus.yml.j2"
+    dest: /media/hdd1/data/prometheus/prometheus.yml
+    mode: 0644
+  register: prometheus_config
+
+- name: "Starting prometheus as a standalone container"
+  docker_container:
+    name: "xver_prometheus"
+    image: "prom/prometheus"
+    state: started
+    restart_policy: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - /media/hdd1/data/prometheus:/prometheus
+      - /media/hdd1/data/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    #log_driver: syslog
+    #log_opt:
+    #  syslog-facility: local0
+    #  syslog-address: "udp://localhost"
+    #  syslog-tag: xvers/prometheus
+  register: new_container
