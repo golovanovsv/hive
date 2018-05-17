@@ -1,0 +1,5 @@
+- name: "Make logstash dirs"
+  file:
+    path: /media/hdd1/data/logstash
+    state: directory
+    mode: 0777
