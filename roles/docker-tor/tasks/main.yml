@@ -9,7 +9,7 @@
 - set_fact:
     is_service: "{{ 'true' if swarm_status.stdout == 'active' and swarm_mgr.stdout == 'true' else 'false' }}"
     srv_name: "xver_tor"
-    srv_image: "nagev/tor"
+    srv_image: "golovanovsv/torgate"
 
 - debug:
     msg: "Cluster of docker swarm or anyone manager not found. Starting in standalone mode"
@@ -23,6 +23,8 @@
     restart_policy: always
     ports:
       - "9150:9150"
+      - "9151:9151"
+    env: "RELAYPORT=9151"
     #log_driver: syslog
     #log_opt:
     #  syslog-facility: local0
@@ -37,6 +39,6 @@
       register: srv_exist
 
     - name: "Creating new service"
-      command: "docker service create -d --replicas 3 --name {{srv_name}} -p 9150:9150 {{srv_image}}"
+      command: "docker service create -d --replicas 5 --name {{srv_name}} -p 9150:9150 -p 9151:9151 --env 'RELAYPORT=9151' {{srv_image}}"
       when: srv_exist.stdout != srv_name
   when: is_service

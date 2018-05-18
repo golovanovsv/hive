@@ -10,14 +10,16 @@
     dest: "/media/hdd1/data/logstash/logstash.conf"
     mode: 0644
 
-- name: "Starting grafana as a standalone container"
+- name: "Starting logstash as a standalone container"
   docker_container:
     name: "xver_logstash"
     image: "logstash:alpine"
     state: started
     restart_policy: always
+    recreate: yes
+    user: root
     ports:
-      - "3000:3000"
+      - "514:5514/udp"
     volumes:
       - /media/hdd1/data/logstash:/config
     command: "-f /config/logstash.conf"

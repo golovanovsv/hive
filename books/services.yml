@@ -5,7 +5,7 @@
     - docker-tor
   tags:
     - services
-    - services-tor
+    - service-tor
 
 - hosts: control
   become: yes
@@ -22,3 +22,11 @@
   tags:
     - services
     - service-grafana
+
+- hosts: control
+  become: yes
+  roles:
+    - docker-logstash
+  tags:
+    - services
+    - service-logstash

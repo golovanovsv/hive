@@ -19,23 +19,26 @@
     - 'iptables -t filter -F INPUT'
     - 'ip6tables -t filter -F INPUT'
 
-- name: "Setup IPv4 established input"
+- name: "Setup local traffic"
   iptables:
     chain: INPUT
     table: filter
-    ctstate: ESTABLISHED,RELATED
-    ip_version: ipv4
+    ip_version: "{{ item }}"
+    in_interface: "!{{ server_interface }}"
     jump: ACCEPT
+  with_items: ["ipv4", "ipv6"]
 
-- name: "Setup IPv6 established input"
+- name: "Setup established input"
   iptables:
     chain: INPUT
     table: filter
+    ip_version: "{{ item }}"
+    in_interface: "{{ server_interface }}"
     ctstate: ESTABLISHED,RELATED
-    ip_version: ipv6
     jump: ACCEPT
+  with_items: ["ipv4", "ipv6"]
 
-- name: "Setup IPv4 protocols rules"
+- name: "Setup IPv4 protocols rules (INPUT)"
   iptables:
     chain: INPUT
     table: filter
@@ -43,11 +46,12 @@
     ip_version: ipv4
     protocol: "{{ item.proto }}"
     destination_port: "{{ item.port }}"
+    ctstate: NEW
     jump: ACCEPT
     state: present
   with_items: "{{ accepted_rules }}"
 
-- name: "Setup IPv4 sources rules"
+- name: "Setup IPv4 sources rules (INPUT)"
   iptables:
     chain: INPUT
     table: filter
@@ -57,7 +61,7 @@
     jump: ACCEPT
   with_items: "{{ accepted_sources_ipv4}}"
 
-- name: "Setup IPv6 protocols rules"
+- name: "Setup IPv6 protocols rules (INPUT)"
   iptables:
     chain: INPUT
     table: filter
@@ -65,11 +69,12 @@
     ip_version: ipv6
     protocol: "{{ item.proto }}"
     destination_port: "{{ item.port }}"
+    ctstate: NEW
     jump: ACCEPT
     state: present
   with_items: "{{ accepted_rules }}"
 
-- name: "Setup IPv6 sources rules"
+- name: "Setup IPv6 sources rules (INPUT)"
   iptables:
     chain: INPUT
     table: filter

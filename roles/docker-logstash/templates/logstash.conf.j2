@@ -1,5 +1,8 @@
 input {
-
+  syslog {
+    port => 5514
+    id => "syslog"
+  }
 }
 
 filter {
@@ -7,5 +10,8 @@ filter {
 }
 
 output {
-
+  file {
+    path => "/config/logs/log-%{+YYYY-MMM-dd}"
+    codec => line { format => "%{message}" }
+  }
 }
