@@ -23,9 +23,9 @@
     volumes:
       - /media/hdd1/data/logstash:/config
     command: "-f /config/logstash.conf"
-    #log_driver: syslog
-    #log_opt:
-    #  syslog-facility: local0
-    #  syslog-address: "udp://localhost"
-    #  syslog-tag: xvers/grafana
+    log_driver: syslog
+    log_opt:
+      syslog-address: "udp://{{ syslog_destination }}"
+      syslog-format: "rfc3164"
+      tag: xvers/grafana
   register: new_container

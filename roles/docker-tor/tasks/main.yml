@@ -25,11 +25,11 @@
       - "9150:9150"
       - "9151:9151"
     env: "RELAYPORT=9151"
-    #log_driver: syslog
-    #log_opt:
-    #  syslog-facility: local0
-    #  syslog-address: "udp://localhost"
-    #  syslog-tag: xvers/tor
+    log_driver: syslog
+    log_opt:
+      syslog-address: "udp://{{ syslog_destination }}"
+      syslog-format: "rfc3164"
+      tag: xvers/tor
   when: not is_service
 
 - name: "Starting TOR as a swarm service"
@@ -39,6 +39,6 @@
       register: srv_exist
 
     - name: "Creating new service"
-      command: "docker service create -d --replicas 5 --name {{srv_name}} -p 9150:9150 -p 9151:9151 --env 'RELAYPORT=9151' {{srv_image}}"
+      command: "docker service create -d --replicas 5 --name {{srv_name}} -p 9150:9150 -p 9151:9151 --env 'RELAYPORT=9151' --log-driver syslog --log-opt syslog-address=udp://{{ syslog_destination }}:514 --log-opt syslog-format=rfc3164 --log-opt tag=xvers/tor {{srv_image}}"
       when: srv_exist.stdout != srv_name
   when: is_service

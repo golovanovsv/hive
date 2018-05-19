@@ -22,9 +22,9 @@
     volumes:
       - /media/hdd1/data/prometheus:/prometheus
       - /media/hdd1/data/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    #log_driver: syslog
-    #log_opt:
-    #  syslog-facility: local0
-    #  syslog-address: "udp://localhost"
-    #  syslog-tag: xvers/prometheus
+    log_driver: syslog
+    log_opt:
+      syslog-address: "udp://{{ syslog_destination }}"
+      syslog-format: "rfc3164"
+      tag: xvers/prometheus
   register: new_container

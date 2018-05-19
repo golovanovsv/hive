@@ -49,6 +49,11 @@
     volumes:
       - /data/consul:/consul/data
     command: "{{ start_args }}"
+    log_driver: syslog
+    log_opt:
+      syslog-address: "udp://{{ syslog_destination }}"
+      syslog-format: "rfc3164"
+      tag: xvers/consul
 
 - name: "Starting registrator for consul"
   docker_container:
@@ -59,3 +64,8 @@
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock
     command: "{{ registrator_args}}"
+    log_driver: syslog
+    log_opt:
+      syslog-address: "udp://{{ syslog_destination }}"
+      syslog-format: "rfc3164"
+      tag: xvers/registrator
