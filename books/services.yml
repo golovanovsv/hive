@@ -1,0 +1,48 @@
+---
+- hosts: control
+  become: yes
+  roles:
+    - docker-tor
+  tags:
+    - services
+    - service-tor
+
+- hosts: control
+  become: yes
+  roles:
+    - docker-prometheus
+  tags:
+    - services
+    - service-prometheus
+
+- hosts: docker
+  become: yes
+  roles:
+    - docker-exporter
+  tags:
+    - services
+    - service-prometheus
+
+- hosts: control
+  become: yes
+  roles:
+    - docker-grafana
+  tags:
+    - services
+    - service-grafana
+
+- hosts: control
+  become: yes
+  roles:
+    - docker-logstash
+  tags:
+    - services
+    - service-logstash
+
+- hosts: x1.weburg.tv
+  become: yes
+  roles:
+    - docker-elasticsearch
+  tags:
+    - services
+    - service-elastic

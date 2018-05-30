@@ -1,0 +1,27 @@
+input {
+    udp {
+     port => 5514
+     host => "0.0.0.0"
+     type => "udp"
+     id => "syslog"
+     codec => "line"
+    }
+}
+
+filter {
+    grok {
+        match => { "message" => "%{SYSLOGBASE} %{GREEDYDATA:text}" }
+    }
+}
+
+output {
+  file {
+    path => "/config/logs/log-%{+YYYY-MMM-dd}"
+    codec => line { format => "[%{timestamp}] %{logsource}[%{program}]: %{text}" }
+  }
+  elasticsearch {
+    hosts => ["{{ elasticlog_destination }}:9200"]
+    user => "elastic"
+    password => "elastic"
+  }
+}

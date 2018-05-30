@@ -1,0 +1,15 @@
+- name: "Starting node exporters on docker nodes"
+  docker_container:
+    name: "node-exporter-{{ ansible_hostname }}"
+    image: "prom/node-exporter"
+    state: started
+    restart_policy: always
+    pid_mode: host
+    network_mode: host
+    ports:
+      - "9100:9100"
+    log_driver: syslog
+    log_opt:
+      syslog-address: "udp://{{ syslog_destination }}"
+      syslog-format: "rfc3164"
+      tag: "xvers/exporter-{{ ansible_hostname }}"

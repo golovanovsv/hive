@@ -25,6 +25,10 @@
     state: present
   when: inventory_hostname in groups['docker_mgr']
 
+- systemd:
+    name: "docker"
+    state: started
+
 - name: "Copy daemon.json"
   template:
     src: daemon.json.j2

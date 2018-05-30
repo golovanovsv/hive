@@ -2,6 +2,13 @@
 - hosts: docker
   become: yes
   roles:
-    - docker
+    - docker-swarm
   tags:
-    - docker
+    - docker-swarm
+
+- hosts: docker
+  become: yes
+  roles:
+    - docker-consul
+  tags:
+    - docker-consul

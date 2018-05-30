@@ -1,0 +1,31 @@
+- name: "Make logstash dirs"
+  file:
+    path: /media/hdd1/data/logstash
+    state: directory
+    mode: 0777
+
+- name: "Copy logstash.conf"
+  template:
+    src: "logstash.conf.j2"
+    dest: "/media/hdd1/data/logstash/logstash.conf"
+    mode: 0644
+
+- name: "Starting logstash as a standalone container"
+  docker_container:
+    name: "xver_logstash"
+    image: "logstash:alpine"
+    state: started
+    restart_policy: always
+    recreate: yes
+    user: root
+    ports:
+      - "514:5514/udp"
+    volumes:
+      - /media/hdd1/data/logstash:/config
+    command: "-f /config/logstash.conf"
+    log_driver: syslog
+    log_opt:
+      syslog-address: "udp://{{ syslog_destination }}"
+      syslog-format: "rfc3164"
+      tag: xvers/logstash
+  register: new_container

@@ -6,3 +6,10 @@ accepted_sources_ipv4:
   - "0.0.0.0/0"
 accepted_sources_ipv6:
   - "::0/128"
+domain_name: "example.com"
+
+grafana_admin_passoword: "example"
+
+syslog_destination: "syslog.example.com"
+
+elasticlog_destination: "log.example.com"
