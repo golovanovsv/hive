@@ -15,6 +15,14 @@
     - services
     - service-prometheus
 
+- hosts: docker
+  become: yes
+  roles:
+    - docker-exporter
+  tags:
+    - services
+    - service-prometheus
+
 - hosts: control
   become: yes
   roles:
@@ -30,3 +38,11 @@
   tags:
     - services
     - service-logstash
+
+- hosts: x1.weburg.tv
+  become: yes
+  roles:
+    - docker-elasticsearch
+  tags:
+    - services
+    - service-elastic

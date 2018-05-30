@@ -19,4 +19,9 @@ output {
     path => "/config/logs/log-%{+YYYY-MMM-dd}"
     codec => line { format => "[%{timestamp}] %{logsource}[%{program}]: %{text}" }
   }
+  elasticsearch {
+    hosts => ["{{ elasticlog_destination }}:9200"]
+    user => "elastic"
+    password => "elastic"
+  }
 }

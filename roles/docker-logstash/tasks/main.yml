@@ -27,5 +27,5 @@
     log_opt:
       syslog-address: "udp://{{ syslog_destination }}"
       syslog-format: "rfc3164"
-      tag: xvers/grafana
+      tag: xvers/logstash
   register: new_container

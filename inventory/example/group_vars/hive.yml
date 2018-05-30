@@ -10,4 +10,6 @@ domain_name: "example.com"
 
 grafana_admin_passoword: "example"
 
-syslog_destination: "212.49.103.46"
+syslog_destination: "syslog.example.com"
+
+elasticlog_destination: "log.example.com"

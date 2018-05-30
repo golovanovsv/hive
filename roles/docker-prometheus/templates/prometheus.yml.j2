@@ -26,3 +26,13 @@ scrape_configs:
       - targets:
         - "ceph0.{{ domain_name }}:9283"
         - "ceph2.{{ domain_name }}:9283"
+
+  - job_name: node_exporters
+    static_configs:
+      - targets:
+        - "x0.{{ domain_name }}:9100"
+        - "x1.{{ domain_name }}:9100"
+        - "x2.{{ domain_name }}:9100"
+        - "ceph0.{{ domain_name }}:9100"
+        - "ceph1.{{ domain_name }}:9100"
+        - "ceph2.{{ domain_name }}:9100"
