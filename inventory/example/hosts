@@ -1,6 +1,9 @@
 [control]
 x0
 
+[services]
+x1
+
 [docker_mgr]
 x0
 x1

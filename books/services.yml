@@ -39,7 +39,7 @@
     - services
     - service-logstash
 
-- hosts: x1.weburg.tv
+- hosts: services
   become: yes
   roles:
     - docker-elasticsearch
